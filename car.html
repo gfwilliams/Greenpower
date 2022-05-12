@@ -1,0 +1,101 @@
+<html>
+<head>
+<script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
+<script src="https://www.puck-js.com/puck.js"></script>
+<script src="common.js"></script>
+</head>
+<body>
+<h1>Greenpower Car</h1>
+<button id="connectBtn">Connect Puck.js</button>
+<div id="log"></div>
+
+<script>
+function log(x) {
+  document.getElementById("log").innerText += x+"\n";
+}
+
+function reconnect() {
+  log("Connecting to "+PEER_ID);
+  conn = peer.connect(PEER_ID);
+  conn.on('open', function() {
+    log("Connection open");
+    // here you have conn.id
+    conn.send({a:"test"});
+  });
+  conn.on('close', function() {
+    log("Connection closed!");
+    reconnect();
+  });  
+}
+
+log("Starting");
+var peer = new Peer();
+var conn;
+peer.on('open', function(id) {
+	log('Peer ID: ' + id);
+	
+	reconnect();
+});
+
+// Called when data received
+function onLine(v) {
+  log("Received from Puck: "+JSON.stringify(v));
+  try {
+    var j = JSON.parse(v);
+    j.t = "puck";
+    if (conn) conn.send(j);
+  } catch(e) {
+  }
+}
+
+// ======================================================= Puck.js data
+var connection;
+document.getElementById("connectBtn").addEventListener("click", function() {
+  if (connection) {
+    connection.close();
+    connection = undefined;
+  }
+  Puck.connect(function(c) {
+    if (!c) {
+      alert("Couldn't connect!");
+      return;
+    }
+    connection = c;
+    // Handle the data we get back, and call 'onLine'
+    // whenever we get a line
+    var buf = "";
+    connection.on("data", function(d) {
+      buf += d;
+      var i = buf.indexOf("\n");
+      while (i>=0) {
+        onLine(buf.substr(0,i));
+        buf = buf.substr(i+1);
+        i = buf.indexOf("\n");
+      }
+    });
+    // First, reset Puck.js
+    connection.write("reset();\n", function() {
+      // Wait for it to reset itself
+      setTimeout(function() {
+        // Now tell it to write data on the current light level to Bluetooth
+        // 10 times a second. Also ensure that when disconnected, Puck.js
+        // resets so the setInterval doesn't keep draining battery.
+        
+        // can have 12.5 as datarate too?
+        connection.write("Puck.accelOn(1.6);Puck.on('accel', e=>{ Bluetooth.println(JSON.stringify({acc:e.acc, v:analogRead(D2)}));});NRF.on('disconnect', function() {reset()});\n",
+          function() { log("Puck connected..."); });
+      }, 1500);
+    });
+  });
+});
+
+// ======================================================= GPS data
+navigator.geolocation.watchPosition(onGPSLocation);
+
+function onGPSLocation(position) {
+  log("Lat " + position.coords.latitude + " Lon " + position.coords.longitude);
+  if (conn) conn.send({t:"location", lat:position.coords.latitude, lon:position.coords.longitude, alt:position.coords.altitude, heading:position.coords.heading, speed:position.coords.speed });
+}
+</script>
+</body>
+</html>
