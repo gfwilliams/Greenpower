@@ -34,8 +34,9 @@ peer.on('connection', function(conn) {
   conn.on('data', function(data){
     log("Got data: "+JSON.stringify(data));
     if ("object"!=typeof data) return;
-    if (data.t == "location") 
+    if (data.t == "location")  // we have lat,lon,alt,heading,speed
       marker.setLatLng([data.lat, data.lon])
+    // if (data.t == "puck") // we have  { acc:{x,y,z}, v }
   });
 });
 
