@@ -49,7 +49,7 @@
           <tr><td>Speed</td><td id="table-speed">-</td></tr>
           <tr><td>Heading</td><td id="table-heading">-</td></tr>
           <tr><td>Altitude</td><td id="table-altitude">-</td></tr>
-          <tr><td>Acceleration</td><td id="table-acc">-</td></tr>
+       <!--   <tr><td>Acceleration</td><td id="table-acc">-</td></tr> -->
           <tr><td>Voltage</td><td id="table-volts">-</td></tr>                    
         </tbody>
       </table>
@@ -86,7 +86,7 @@ peer.on('connection', function(conn) {
       document.getElementById("table-altitude").innerText = data.alt.toFixed(1)+"m";      
     }
     if (data.t == "puck") { // we have  { acc:{x,y,z}, v }
-      document.getElementById("table-acc").innerText = [data.acc.x,data.acc.y,data.acc.z].map(v => (v/8192).toFixed(2));    
+      //document.getElementById("table-acc").innerText = [data.acc.x,data.acc.y,data.acc.z].map(v => (v/8192).toFixed(2));    
       document.getElementById("table-volts").innerText = (data.v*24).toFixed(2) + " calibrate me!";
     }
     
