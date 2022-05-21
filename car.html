@@ -108,7 +108,8 @@ document.getElementById("connectBtn").addEventListener("click", function() {
         // resets so the setInterval doesn't keep draining battery.
         
         // can have 12.5 as datarate too?
-        connection.write("Puck.accelOn(1.6);Puck.on('accel', e=>{ Bluetooth.println(JSON.stringify({acc:e.acc, v:analogRead(D2)}));});NRF.on('disconnect', function() {reset()});\n",
+        //connection.write("Puck.accelOn(1.6);Puck.on('accel', e=>{ Bluetooth.println(JSON.stringify({acc:e.acc, v:analogRead(D2)}));});NRF.on('disconnect', function() {reset()});\n",
+	connection.write("setInterval(()=>{ Bluetooth.println(JSON.stringify({v:analogRead(D2)}));},500);NRF.on('disconnect', function() {reset()});\n",
           function() { log("Puck connected..."); });
       }, 1500);
     });
