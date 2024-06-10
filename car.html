@@ -4,34 +4,113 @@
 <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
 <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-exp.min.css">
 <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-icons.min.css">
-<script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
 <script src="https://www.puck-js.com/puck.js"></script>
-<script src="common.js"></script>
+<script src="https://bernii.github.io/gauge.js/dist/gauge.min.js"></script>
 
 <style>
-#log { max-height: 80vh; overflow-x:scroll; overflow-y:scroll;
-        font-size:50%;font-family:"monospace";
-        white-space: nowrap;
+#log { overflow-x:scroll; overflow-y:scroll;
+    font-size:50%;font-family:"monospace";
+    white-space: nowrap;
+    position:absolute;
+    top:0px;
+    z-index:-20;
+    height: 100vh;
+    width:50vh;
  }
+
+.gauge {
+  position:absolute;
+  right : 0vh;
+  width : 50vh;
+  height : 50vh;  
+  z-index : -10;
+}
+.gauge span {
+  font-size: 5vh;
+}
+.gauge canvas {
+  width : 50vh;
+  height : 40vh;  
+}
+#speeddiv {
+  top: 0vh;
+}
+#wattsdiv {
+  top: 50vh;
+}
 </style>  
 </head>
 <body>
+<div class="gauge" id="speeddiv">
+  <span id="speed-textfield"></span><span>kph</span>
+  <canvas id="speed"></canvas>
+</div>  
+<div class="gauge" id="wattsdiv">
+  <span id="watts-textfield"></span><span>W</span>
+  <canvas id="watts"></canvas>
+</div>
+
 <header class="navbar">
   <section class="navbar-section">
     <a class="navbar-brand mr-2">Greenpower Telemetry</a>
   </section>
   <section class="navbar-section">
-    <button class="btn btn-primary" id="connectBtn">Connect Puck.js</button>
+    <button class="btn btn-default" id="urlBtn">Set URL</button>
+    <button class="btn btn-primary" id="connectBtn">Connect</button>
   </section>
 </header>
-<div class="container">
-  <div class="columns">
-    <div class="column col-12" id="log">
-    </div>
-  </div>
+
+<div id="log">
+
+
+
+
 </div>
 
+
 <script>
+
+const CODE = `
+NRF.on("disconnect",reset);
+
+var data;
+
+function rnd(v) { return Math.round(v*100)/100 }
+
+setInterval(()=>{
+  var va = 0, vb = 0, a = 0;
+  for (var i=0;i<10;i++) {
+    va += Q0.sda.analog();
+    vb += Q0.scl.analog();
+    a += Q1.scl.analog();    
+  }
+  data = {
+    t : "data",
+    V1 : rnd(3.72*va),
+    V2 : rnd(3.72*vb),
+    A : rnd(a)/10,
+    throttle : rnd(H0.analog())
+  };
+  data.V = data.V1+data.V2;  
+  data.W = rnd(data.V*data.A);  
+//  data.temp1 = sensor1.getTemp();
+//  data.temp2 = sensor2.getTemp();  
+  Bluetooth.println(JSON.stringify(data));
+  LED1.pulse(1,100);
+},1000); 
+
+Q0.setPower(1);
+Q1.setPower(1);
+Q2.setPower(1);
+var ow = new OneWire(Q2.scl);
+// ow.search() => [ "28ff33dd641401ac", "28ff8b996414038f" ]
+//var sensor1 = require("DS18B20").connect(ow, "28ff33dd641401ac" );
+//var sensor2 = require("DS18B20").connect(ow, "28ff8b996414038f" );
+`;
+var URL = window.localStorage.getItem("SHEETS_URL")||""; // 'https://script.google.com/macros/s/.../exec';
+
+var currentPosition;
+
 function log(x) {
   const element = document.getElementById("log");
   var l = element.innerText.split("\n");
@@ -40,37 +119,42 @@ function log(x) {
   element.innerText = l.join("\n");
   element.scrollTop = element.scrollHeight;
 }
-function reconnect() {
-  log("Connecting to "+PEER_ID);
-  conn = peer.connect(PEER_ID);
-  conn.on('open', function() {
-    log("Connection open");
-    // here you have conn.id
-    conn.send({a:"test"});
-  });
-  conn.on('close', function() {
-    log("Connection closed!");
-    reconnect();
-  });  
-}
 
-log("Starting");
-var peer = new Peer();
-var conn;
-peer.on('open', function(id) {
-	log('Peer ID: ' + id);
-	
-	reconnect();
-});
+function sendToGoogleSheets(data) {
+  var http = new XMLHttpRequest();  
+  var params = Object.keys(data).map(key => key+"="+data[key]).join("&");//'V1=1&V2=2&V=3&A=5.5';
+  http.open('POST', URL, true);
+  http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+  http.onreadystatechange = function() { //Call a function when the state changes.
+      if(http.readyState == 4 && http.status == 200) {
+          log("[Sheets] "+http.responseText);
+      }// else console.log(http);
+  }
+  http.send(params);
+}
 
 // Called when data received
 function onLine(v) {
-  log("Received from Puck: "+JSON.stringify(v));
-  try {
+  v = v.trim();
+  log("[Jolt.js] "+v);
+  
+  if (v.startsWith("{")) try {
     var j = JSON.parse(v);
-    j.t = "puck";
-    if (conn) conn.send(j);
+    j.t = "data";
+    
+    if (j.W) gaugeWatts.set(j.W);
+    
+    if (currentPosition) {
+      j.lat = currentPosition.latitude;
+      j.lon = currentPosition.longitude;      
+      j.alt = currentPosition.altitude || 0;
+      j.speed = (currentPosition.speed||0 ) / 3.6;
+    }
+    
+    sendToGoogleSheets(j);
+    
   } catch(e) {
+    console.warn(e);
   }
 }
 
@@ -108,22 +192,66 @@ document.getElementById("connectBtn").addEventListener("click", function() {
         // resets so the setInterval doesn't keep draining battery.
         
         // can have 12.5 as datarate too?
-        connection.write("Puck.accelOn(1.6);Puck.on('accel', e=>{ Bluetooth.println(JSON.stringify({acc:e.acc, v:analogRead(D2)}));});NRF.on('disconnect', function() {reset()});\n",
-          function() { log("Puck connected..."); });
+        connection.write(CODE+"\n",
+          function() { log("Jolt.js connected..."); });
       }, 1500);
     });
   });
 });
 
+// ======================================================= Gauges
+//https://bernii.github.io/gauge.js/
+var opts = {
+  angle: -0.2, // The span of the gauge arc
+  lineWidth: 0.2, // The line thickness
+  radiusScale: 0.5, // Relative radius
+  pointer: {
+    length: 0.6, // // Relative to gauge radius
+    strokeWidth: 0.035, // The thickness
+    color: '#000000' // Fill color
+  },
+  limitMax: false,     // If false, max value increases automatically if value > maxValue
+  limitMin: false,     // If true, the min value of the gauge will be fixed
+  colorStart: '#6FADCF',   // Colors
+  colorStop: '#8FC0DA',    // just experiment with them
+  strokeColor: '#E0E0E0',  // to see which ones work best for you
+  highDpiSupport: true,     // High resolution support
+};
+var gaugeWatts = new Gauge(document.getElementById('watts')).setOptions(opts);
+gaugeWatts.setTextField(document.getElementById("watts-textfield"));
+gaugeWatts.maxValue = 3000;
+gaugeWatts.setMinValue(0);
+gaugeWatts.set(0);
+//gaugeWatts.animationSpeed = 32; // set animation speed (32 is default value)
+var gaugeSpeed = new Gauge(document.getElementById('speed')).setOptions(opts);
+gaugeSpeed.setTextField(document.getElementById("speed-textfield"));
+gaugeSpeed.maxValue = 2000;
+gaugeSpeed.setMinValue(0);
+gaugeSpeed.set(0);
+
 // ======================================================= GPS data
+
+function onGPSLocation(position) {
+  console.log(position);
+  log("Lat " + position.coords.latitude + " Lon " + position.coords.longitude);
+  gaugeSpeed.set((position.coords.speed||0) / 3.6);
+  currentPosition = position.coords;
+}
+
 navigator.geolocation.watchPosition(onGPSLocation, err=>{
   log("GPS ERROR: "+err.toString());
 }, {enableHighAccuracy:true});
 
-function onGPSLocation(position) {
-  log("Lat " + position.coords.latitude + " Lon " + position.coords.longitude);
-  if (conn) conn.send({t:"location", lat:position.coords.latitude, lon:position.coords.longitude, alt:position.coords.altitude, heading:position.coords.heading, speed:position.coords.speed });
-}
+// Test
+
+if (!URL) log("No sheets URL - click 'Set URL' above");
+document.getElementById("urlBtn").addEventListener("click", function() {
+  if (!URL) URL = "https://script.google.com/macros/s/.../exec";
+  URL = window.prompt("Enter URL:", URL);
+  if (URL == "https://script.google.com/macros/s/.../exec") URL="";
+  window.localStorage.setItem("SHEETS_URL", URL);
+});
+
 </script>
 </body>
 </html>
