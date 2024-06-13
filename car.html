@@ -22,7 +22,7 @@
   position:absolute;
   right : 0vh;
   width : 50vh;
-  height : 50vh;  
+  height : 50vh;
   z-index : -10;
 }
 .gauge span {
@@ -30,7 +30,7 @@
 }
 .gauge canvas {
   width : 50vh;
-  height : 40vh;  
+  height : 40vh;
 }
 #speeddiv {
   top: 0vh;
@@ -38,13 +38,13 @@
 #wattsdiv {
   top: 50vh;
 }
-</style>  
+</style>
 </head>
 <body>
 <div class="gauge" id="speeddiv">
   <span id="speed-textfield"></span><span>kph</span>
   <canvas id="speed"></canvas>
-</div>  
+</div>
 <div class="gauge" id="wattsdiv">
   <span id="watts-textfield"></span><span>W</span>
   <canvas id="watts"></canvas>
@@ -70,43 +70,7 @@
 
 <script>
 
-const CODE = `
-NRF.on("disconnect",reset);
-
-var data;
-
-function rnd(v) { return Math.round(v*100)/100 }
-
-setInterval(()=>{
-  var va = 0, vb = 0, a = 0;
-  for (var i=0;i<10;i++) {
-    va += Q0.sda.analog();
-    vb += Q0.scl.analog();
-    a += Q1.scl.analog();    
-  }
-  data = {
-    t : "data",
-    V1 : rnd(3.72*va),
-    V2 : rnd(3.72*vb),
-    A : rnd(a)/10,
-    throttle : rnd(H0.analog())
-  };
-  data.V = data.V1+data.V2;  
-  data.W = rnd(data.V*data.A);  
-//  data.temp1 = sensor1.getTemp();
-//  data.temp2 = sensor2.getTemp();  
-  Bluetooth.println(JSON.stringify(data));
-  LED1.pulse(1,100);
-},1000); 
-
-Q0.setPower(1);
-Q1.setPower(1);
-Q2.setPower(1);
-var ow = new OneWire(Q2.scl);
-// ow.search() => [ "28ff33dd641401ac", "28ff8b996414038f" ]
-//var sensor1 = require("DS18B20").connect(ow, "28ff33dd641401ac" );
-//var sensor2 = require("DS18B20").connect(ow, "28ff8b996414038f" );
-`;
+const CODE = `start()\n`;
 var URL = window.localStorage.getItem("SHEETS_URL")||""; // 'https://script.google.com/macros/s/.../exec';
 
 var currentPosition;
@@ -121,7 +85,7 @@ function log(x) {
 }
 
 function sendToGoogleSheets(data) {
-  var http = new XMLHttpRequest();  
+  var http = new XMLHttpRequest();
   var params = Object.keys(data).map(key => key+"="+data[key]).join("&");//'V1=1&V2=2&V=3&A=5.5';
   http.open('POST', URL, true);
   http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
@@ -137,22 +101,22 @@ function sendToGoogleSheets(data) {
 function onLine(v) {
   v = v.trim();
   log("[Jolt.js] "+v);
-  
+
   if (v.startsWith("{")) try {
     var j = JSON.parse(v);
     j.t = "data";
-    
+
     if (j.W) gaugeWatts.set(j.W);
-    
+
     if (currentPosition) {
       j.lat = currentPosition.latitude;
-      j.lon = currentPosition.longitude;      
+      j.lon = currentPosition.longitude;
       j.alt = currentPosition.altitude || 0;
       j.speed = (currentPosition.speed||0 ) / 3.6;
     }
-    
+
     sendToGoogleSheets(j);
-    
+
   } catch(e) {
     console.warn(e);
   }
@@ -190,7 +154,7 @@ document.getElementById("connectBtn").addEventListener("click", function() {
         // Now tell it to write data on the current light level to Bluetooth
         // 10 times a second. Also ensure that when disconnected, Puck.js
         // resets so the setInterval doesn't keep draining battery.
-        
+
         // can have 12.5 as datarate too?
         connection.write(CODE+"\n",
           function() { log("Jolt.js connected..."); });
