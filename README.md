@@ -3,28 +3,47 @@ Greenpower receiver
 
 https://gfwilliams.github.io/Greenpower/
 
-## In the car
+## Wiring
 
-* Wire up a Jolt.js:
+* Wire up a [Jolt.js](https://www.espruino.com/Jolt.js):
 
 ```
-Q0 => battery voltage cable
+JST => Connect to a LiPo battery
+Q0 => battery voltage
+ sda (blue)   : Potential divider to GND and capacitor from Battery 1 V+ (link wire between batteries)
+ scl (yellow) : Potential divider to GND and capacitor from Battery 2 V+ (main 24v voltage)
+ gnd (black) : Fan negative
 Q1 => battery amps cable
-Q2 => tempertaure sensors
-H0 => Throttle control
+ sda (blue)   : 10k resistor to one side of GND wire from battery to motor controller
+ scl (yellow) : 10k resistor to other side of GND wire from battery to motor controller 
+   On the Jolt.js side of the resistor, add a 1uF capacitor
+ gnd (black) : Fan pin 4 (speed control)
+Q2 => temperature sensors (2x DS18B20)
+ scl (yellow)  :  DS18B20 data wires https://www.espruino.com/DS18B20 (plus 10k resistor to vcc wire)
+ gnd (black) : DS18B20 GND wires
+ vcc (red)   : DS18B20 VCC wires
+H0 => Throttle control - connect to the middle control wire from the motor speed control
 ```
+
+Ensure that potential dividers are connected to a read GND on the Jolt.js that can never come disconnected, or the
+inputs could become over-volted and can destroy the device,
+
+* Connect a fan to the 
+
+## Software in the car
+
 * Get an Android phone and configure it not to turn off 
 * On it, point Chrome at [https://gfwilliams.github.io/Greenpower/car.html](https://gfwilliams.github.io/Greenpower/car.html)
 * get the URL set up (see below) - it should remember
 * Click `Connect`
 * Should be done!
 
-## On the receiver
+## Setting up the Spreadsheet
 
 (based on [this project](https://github.com/jamiewilson/form-to-google-sheets))
 
 * Create a new Google Sheet
-* Set top row to: `timestamp	V1	V2	V	A	W	throttle`
+* Set top row to have the following fields: `timestamp	V1	V2	V	A	W	throttle	lat	lon	alt	speed	temp1	temp2	fan`
 * `Extensions -> Apps Script`
 * Replace `myFunction` with:
 
@@ -77,7 +96,26 @@ function doPost (e) {
 * `Add Trigger`, then fill in `doPost`/`Head`/`From spreadsheet`,`On form submit` and `Save`
 * Up top right click `Deploy`, `New Deployment`
 * Select `Web app` as type. Call it `Greenpower pusher` then allow `Anyone` to use it
-* Click `Deploy` and copy the `Web app` URL: https://script.google.com/macros/s/......./exec
-* Go to https://gfwilliams.github.io/Greenpower/car.html on your phone, tap, `set URL` and paste it in
+* Click `Deploy` and copy the `Web app` URL: `https://script.google.com/macros/s/......./exec`
+* Go to `https://gfwilliams.github.io/Greenpower/car.html` on your phone, tap, `set URL` and paste the URL in
+  (it might be worth saving the URL in the spreadsheet itself!)
+
+### Spreadsheet Extras
+
+You can create a Sheet2 to show the current values.
+
+* In Row 1, paste in your Web API URL (above) just so you remember it
+* In Row 2, Col 1, paste in `=Sheet1!A1` then drag along to column N to clone (this will copy all column headings)
+* In Row 3, Col 1, paste in `=CHOOSEROWS(TOCOL(Sheet1!A$3:Sheet1!A$100000,1),-1)` then drag along to column N to clone (this formula will copy the *value in the last populated column*)
+
+Now if you want to add a Gauge:
+
+* Type in a value name, say `Speed` in one spare cell
+* In the cell to a right, press `=` and click on a value you're interested in
+* Now Highlight both cells, and click `Insert` -> `Chart`
+* Under `Chart Editor` on the right, click `Chart Type` and scroll down to `Gauge`
+* Now under `Customise`, `Gauge` you can set the range you want for min/max
+
+
 
 
