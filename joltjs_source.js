@@ -34,7 +34,6 @@ a.channels.forEach(function(c,f){c.gain||(c.gain=1);c.tacq||(c.tacq=3);if(0>d.in
     t : "data",
     V1 : rnd(3.72*va),
     V : rnd(3.72*vb),
-    A : rnd(a),
     throttle : rnd(E.clip(H0.analog()/3.9,0,1))
   };
   currentSense.start();
@@ -42,13 +41,14 @@ a.channels.forEach(function(c,f){c.gain||(c.gain=1);c.tacq||(c.tacq=3);if(0>d.in
   currentSense.stop();
   if (data.A>32768) data.A=0;//rolled over -> negative
   data.V2 = data.V-data.V1;
+  data.A /= 10;
   data.W = rnd(data.V*data.A);
   data.temp1 = sensor1.getTemp();
 
   if (data.temp1==85 || data.temp1===null) {
     data.temp1="";
   } else {
-    data.fan = (data.temp1 > 30)?2:0;
+    data.fan = (data.temp1 > 30)?((data.temp1 > 40)?2:1):0;
     setFan(data.fan);
   }
   data.temp2 = sensor2.getTemp();
