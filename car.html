@@ -130,7 +130,21 @@ function onLine(v) {
 
 // ======================================================= Jolt.js data
 var connection;
-document.getElementById("connectBtn").addEventListener("click", function() {
+
+function resetJoltAndUploadCode() {
+  // First, reset Jolt.js
+  connection.write("reset();\n", function() {
+    // Wait for it to reset itself
+    setTimeout(function() {
+      log("Jolt.js Reset - uploading code...");
+      // Now upload all the code. Also ensure that when disconnected, Jolt.js resets so the setInterval doesn't keep draining battery.
+      connection.write(JOLTJS_CODE+"\n",
+        function() { log("Jolt.js ready!"); });
+    }, 1500);
+  });
+}
+
+function reconnect() {
   if (connection) {
     connection.close();
     connection = undefined;
@@ -155,18 +169,27 @@ document.getElementById("connectBtn").addEventListener("click", function() {
         i = buf.indexOf("\n");
       }
     });
-    // First, reset Jolt.js
-    connection.write("reset();\n", function() {
-      // Wait for it to reset itself
-      setTimeout(function() {
-        log("Jolt.js Reset - uploading code...");
-        // Now upload all the code. Also ensure that when disconnected, Jolt.js resets so the setInterval doesn't keep draining battery.
-        connection.write(JOLTJS_CODE+"\n",
-          function() { log("Jolt.js connected..."); });
-      }, 1500);
-    });
+    // Write code
+    resetJoltAndUploadCode();
   });
-});
+}
+
+// Check for disconnection
+setInterval(function() {
+  if (!connection || connection.isOpen) return; // not connected yet or open
+  if (connection.isOpening) {
+    log("Jolt.js still attempting connection....");
+    return;
+  }
+  log("Jolt.js Connection dropped - reconnecting!");
+  connection.isOpening = true;
+  connection.reconnect(function() {
+    log("Jolt.js Reconnected!");
+    resetJoltAndUploadCode();
+  });
+}, 5000);
+
+document.getElementById("connectBtn").addEventListener("click", reconnect);
 
 // ======================================================= Gauges
 //https://bernii.github.io/gauge.js/
