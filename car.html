@@ -108,6 +108,11 @@ function onLine(v) {
   v = v.trim();
   log("[Jolt.js] "+v);
 
+  if (v.includes("Ctrl-C while processing interval - removing it.")) {
+    log("ERROR DETECTED - DISCONNECTING TO FORCE RECONNECT");
+    connection.write(" \x03    \x03E.reboot()\n");
+  }
+
   if (v.startsWith("{")) try {
     var j = JSON.parse(v);
     j.t = "data";
@@ -152,7 +157,9 @@ function reconnect() {
   log("Connecting to Jolt.js...");
   Puck.connect(function(c) {
     if (!c) {
-      alert("Couldn't connect!");
+      log("==============================================");
+      log("       ERROR: Couldn't connect!");
+      log("==============================================");
       return;
     }
     log("Jolt.js Connected - resetting...");
