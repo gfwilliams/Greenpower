@@ -123,7 +123,7 @@ function onLine(v) {
       j.lat = currentPosition.latitude;
       j.lon = currentPosition.longitude;
       j.alt = currentPosition.altitude || 0;
-      j.speed = (currentPosition.speed||0 ) / 3.6;
+      j.speed = (currentPosition.speed||0 /*meters/sec*/ ) * 3.6; // send as kph
     }
 
     sendToGoogleSheets(j);
@@ -233,7 +233,7 @@ gaugeSpeed.set(0);
 function onGPSLocation(position) {
   console.log(position);
   log("Lat " + position.coords.latitude + " Lon " + position.coords.longitude);
-  gaugeSpeed.set((position.coords.speed||0) / 3.6);
+  gaugeSpeed.set((position.coords.speed||0 /* meters/sec */) * 3.6); // converted to kph
   currentPosition = position.coords;
 }
 
