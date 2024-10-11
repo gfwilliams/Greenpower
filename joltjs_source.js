@@ -47,7 +47,7 @@ a.channels.forEach(function(c,f){c.gain||(c.gain=1);c.tacq||(c.tacq=3);if(0>d.in
   if (data.temp1==85 || data.temp1===null) {
     data.temp1="";
   } else {
-    data.fan = (data.temp1 > 30)?((data.temp1 > 35)?2:1):0;
+    data.fan = (data.temp1 > 25)?((data.temp1 > 30)?2:1):0;
     setFan(data.fan);
   }
   data.temp2 = sensor2.getTemp();
