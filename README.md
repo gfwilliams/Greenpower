@@ -22,7 +22,9 @@ Q2 => temperature sensors (2x DS18B20)
  scl (yellow)  :  DS18B20 data wires https://www.espruino.com/DS18B20 (plus 10k resistor to vcc wire)
  gnd (black) : DS18B20 GND wires
  vcc (red)   : DS18B20 VCC wires
-H0 => Throttle control - connect to the middle control wire from the motor speed control
+H0 => Throttle control - connect to the middle control wire from the motor speed control via a 10k resistor
+      (note that H0 has an internal 2.5k pulldown, which can affect the signal range from the accelerator pedal
+      and may stop it reaching 4v = 100%)
 ```
 
 Ensure that potential dividers are connected to a read GND on the Jolt.js that can never come disconnected, or the
