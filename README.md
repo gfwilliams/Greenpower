@@ -29,7 +29,9 @@ Q3 => (v2 only) HC-14 LoRa Radio
  sda (blue)   : HC-14 TX (Jolt.js RX)
  scl (yellow) : HC-14 RX (Jolt.js TX)
  vcc (red)    : HC-14 KEY
-H0 => Throttle control - connect to the middle control wire from the motor speed control
+H0 => Throttle control - connect to the middle control wire from the motor speed control via a 10k resistor
+      (note that H0 has an internal 2.5k pulldown, which can affect the signal range from the accelerator pedal
+      and may stop it reaching 4v = 100%)
 ```
 
 Ensure that potential dividers are connected to a read GND on the Jolt.js that can never come disconnected, or the
