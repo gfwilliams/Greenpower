@@ -1,7 +1,10 @@
 Greenpower receiver
 ===================
 
-https://gfwilliams.github.io/Greenpower/
+This is a set of software that can be run with a [Jolt.js](https://www.espruino.com/Jolt.js) on a [Greenpower car](https://www.greenpower.co.uk/) to provide real-time stats to the pit wall.
+
+Run the Reciever code: https://gfwilliams.github.io/Greenpower/v2
+
 
 ## Wiring
 
@@ -22,15 +25,34 @@ Q2 => temperature sensors (2x DS18B20)
  scl (yellow)  :  DS18B20 data wires https://www.espruino.com/DS18B20 (plus 10k resistor to vcc wire)
  gnd (black) : DS18B20 GND wires
  vcc (red)   : DS18B20 VCC wires
+Q3 => (v2 only) HC-14 LoRa Radio
+ sda (blue)   : HC-14 TX (Jolt.js RX)
+ scl (yellow) : HC-14 RX (Jolt.js TX)
+ vcc (red)    : HC-14 KEY
 H0 => Throttle control - connect to the middle control wire from the motor speed control
 ```
 
 Ensure that potential dividers are connected to a read GND on the Jolt.js that can never come disconnected, or the
 inputs could become over-volted and can destroy the device,
 
-* Connect a fan to the 
+* Connect the LoRa radio's power source direct to the LiPo, with a large capacitor
+* Connect the fan's red wire to the wire between the two 12v batteries (so it's just getting 12v) and connect its GND and speed control wires as above.
 
-## Software in the car
+
+VERSION 2
+---------
+
+This uses a LoRa (long range) radio attached to Jolt.js in the car, and one attached to a laptop at the side of the track (avoiding the need for mobile reception).
+
+See the [README in the v2 directory](v2/README.md)
+
+
+VERSION 1
+---------
+
+This uses a phone in the car to upload the stats via to a Google Spreadsheet.
+
+### Software in the car
 
 * Get an Android phone and configure it not to turn off 
 * On it, point Chrome at [https://gfwilliams.github.io/Greenpower/car.html](https://gfwilliams.github.io/Greenpower/car.html)
@@ -38,7 +60,7 @@ inputs could become over-volted and can destroy the device,
 * Click `Connect`
 * Should be done!
 
-## Setting up the Spreadsheet
+### Setting up the Spreadsheet
 
 (based on [this project](https://github.com/jamiewilson/form-to-google-sheets))
 
