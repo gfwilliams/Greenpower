@@ -5,6 +5,9 @@ This uses a LoRa (long range) radio attached to Jolt.js in the car, and one atta
 
 Run the Reciever code: https://gfwilliams.github.io/Greenpower/v2
 
+[Click here to upload Jolt.js code](https://www.espruino.com/ide/?codeurl=https://raw.githubusercontent.com/gfwilliams/Greenpower/refs/heads/main/v2/joltjs.js) - ensure
+upload type is set to `Flash` (not `RAM`)
+
 It requires:
 
 * A [Jolt.js](https://www.espruino.com/Jolt.js) set up as shown in http://github.com/gfwilliams/Greenpower
