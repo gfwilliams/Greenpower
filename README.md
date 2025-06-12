@@ -3,7 +3,8 @@ Greenpower receiver
 
 This is a set of software that can be run with a [Jolt.js](https://www.espruino.com/Jolt.js) on a [Greenpower car](https://www.greenpower.co.uk/) to provide real-time stats to the pit wall.
 
-Run the Reciever code: https://gfwilliams.github.io/Greenpower/v2
+* Run the v2 [Reciever App](https://gfwilliams.github.io/Greenpower/v2)
+* [Find out more about v2](v2/README.md)
 
 
 ## Wiring
