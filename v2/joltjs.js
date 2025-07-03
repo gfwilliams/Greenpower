@@ -1,4 +1,4 @@
-const VERSION=2;
+const VERSION=3;
 const BLEUART = {connect:function(r){var k,l,m,n,f,h={write:function(a){return new Promise(function b(g,e){a.length?(n.writeValue(a.substr(0,20)).then(function(){b(g,e)}).catch(e),a=a.substr(20)):g()})},disconnect:function(){return k.disconnect()},eval:function(a){return new Promise(function(c,g){function e(){var d=b.indexOf("\n");if(0<=d){clearTimeout(p);f=p=void 0;var q=b.substr(0,d);try{c(JSON.parse(q))}catch(t){g(q)}b.length>d+1&&h.emit("data",b.substr(d+1))}}var b="";var p=setTimeout(e,
 5E3);f=function(d){b+=d;0<=b.indexOf("\n")&&e()};h.write("\x03\x10Bluetooth.write(JSON.stringify("+a+")+'\\n')\n").then(function(){})})}};return r.gatt.connect().then(function(a){k=a;return k.getPrimaryService("6e400001-b5a3-f393-e0a9-e50e24dcca9e")}).then(function(a){l=a;return l.getCharacteristic("6e400002-b5a3-f393-e0a9-e50e24dcca9e")}).then(function(a){n=a;return l.getCharacteristic("6e400003-b5a3-f393-e0a9-e50e24dcca9e")}).then(function(a){m=a;m.on("characteristicvaluechanged",function(c){c=
 E.toString(c.target.value.buffer);f?f(c):h.emit("data",c)});return m.startNotifications()}).then(function(){return h})}};
@@ -60,10 +60,10 @@ function getData() {
   data.lat = state.lat;
   data.lon = state.lon;
   data.vel = rnd(state.vel);
-  
-  //Bluetooth.println(JSON.stringify(data));  
+
+  //Bluetooth.println(JSON.stringify(data));
   LED1.pulse(1,100);
-  
+
   loraCounter++;
   if (loraCounter>2) {
     LED3.pulse(1,100);
@@ -80,11 +80,11 @@ function getData() {
 }
 function setFan(v) {
   if (v==1) {
-    Q0.setPower(1);Q1.setPower(1); // fan on slow
+    Q0.setPower(0);Q1.setPower(1); // fan on slow
   } else if (v==2) {
-    Q0.setPower(1);Q1.setPower(0); // fan on fast
+    Q0.setPower(0);Q1.setPower(0); // fan on fast
   } else {
-    Q0.setPower(0);Q1.setPower(0); // fan off
+    Q0.setPower(1);Q1.setPower(1); // fan off
   }
 }
 function start() {
@@ -213,7 +213,7 @@ function drawTime() {
 
 // find nearest track
 function findTrack(fix) {
-  var dist;  
+  var dist;
   TRACKS.forEach(track => {
     var dlat = fix.lat - track.lat;
     var dlon = fix.lon - track.lon;
@@ -222,7 +222,7 @@ function findTrack(fix) {
       dist = d;
       TRK = track;
     }
-  });  
+  });
   // set up center pt
   TRK.centre = Bangle.project(TRK);
   TRK.dirv = TRACKDIR[TRK.dir];
@@ -270,7 +270,7 @@ function onGPS(fix) {
     }
     drawTime();
   }
-  
+
   Bluetooth.println(JSON.stringify({lat:Math.round(fix.lat*10000)/10000,lon:Math.round(fix.lon*10000)/10000,v:Math.round(fix.speed*100)/100/*kph*/,l:lap,t:Math.round(getTime()-lastLap)}));
 }
 function msg(m) {
@@ -318,7 +318,7 @@ Bangle.setGPSPower(0, "app");
         state.t = json.t; // lap time
       } catch (e) {}
     });
-    console.log("Bangle Ready");    
+    console.log("Bangle Ready");
   }).catch((e) => {
     console.log("Bangle not found", e);
   });
