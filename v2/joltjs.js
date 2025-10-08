@@ -1,4 +1,4 @@
-const VERSION=3;
+const VERSION=4;
 const BLEUART = {connect:function(r){var k,l,m,n,f,h={write:function(a){return new Promise(function b(g,e){a.length?(n.writeValue(a.substr(0,20)).then(function(){b(g,e)}).catch(e),a=a.substr(20)):g()})},disconnect:function(){return k.disconnect()},eval:function(a){return new Promise(function(c,g){function e(){var d=b.indexOf("\n");if(0<=d){clearTimeout(p);f=p=void 0;var q=b.substr(0,d);try{c(JSON.parse(q))}catch(t){g(q)}b.length>d+1&&h.emit("data",b.substr(d+1))}}var b="";var p=setTimeout(e,
 5E3);f=function(d){b+=d;0<=b.indexOf("\n")&&e()};h.write("\x03\x10Bluetooth.write(JSON.stringify("+a+")+'\\n')\n").then(function(){})})}};return r.gatt.connect().then(function(a){k=a;return k.getPrimaryService("6e400001-b5a3-f393-e0a9-e50e24dcca9e")}).then(function(a){l=a;return l.getCharacteristic("6e400002-b5a3-f393-e0a9-e50e24dcca9e")}).then(function(a){n=a;return l.getCharacteristic("6e400003-b5a3-f393-e0a9-e50e24dcca9e")}).then(function(a){m=a;m.on("characteristicvaluechanged",function(c){c=
 E.toString(c.target.value.buffer);f?f(c):h.emit("data",c)});return m.startNotifications()}).then(function(){return h})}};
@@ -65,7 +65,7 @@ function getData() {
   LED1.pulse(1,100);
 
   loraCounter++;
-  if (loraCounter>2) {
+  if (loraCounter>4) {
     LED3.pulse(1,100);
     loraCounter = 0;
     HC14.send({
@@ -120,7 +120,13 @@ HC14.key.write(1); // normal radio mode
 HC14.serial.setup(9600, { rx: Q3.sda, tx : Q3.scl });
 /* // on a new device?
 HC14.key.write(0); // config mode
-HC14.serial.println("AT+S4")
+AT+S? to check rate - default is 3
+HC14.serial.println("AT+S?");
+HC14.serial.println("AT+S2"); // slower rate, better?
+AT+C? to check freq
+HC14.serial.println("AT+C028"); // 434Mhz default
+HC14.serial.println("AT+C027"); // 433.39Mhz still legal in UK <-- use this
+HC14.serial.println("AT+C029"); // 434.61Mhz still legal in UK
 */
 HC14.serial.on("data", d => {
   console.log("LoRa in< "+E.toJS(d));

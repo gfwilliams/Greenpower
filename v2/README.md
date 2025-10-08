@@ -3,7 +3,7 @@ Greenpower Jolt.js v2
 
 This uses a LoRa (long range) radio attached to Jolt.js in the car, and one attached to a laptop at the side of the track (avoiding the need for mobile reception).
 
-Run the Reciever code: [https://gfwilliams.github.io/Greenpower/v2](https://gfwilliams.github.io/Greenpower/v2)
+Run the Receiver code: [https://gfwilliams.github.io/Greenpower/v2](https://gfwilliams.github.io/Greenpower/v2)
 
 [Click here to upload Jolt.js code](https://www.espruino.com/ide/?codeurl=https://raw.githubusercontent.com/gfwilliams/Greenpower/refs/heads/main/v2/joltjs.js) - ensure
 upload type is set to `Flash` (not `RAM`)
