@@ -93,12 +93,15 @@ function start() {
   Q2.setPower(1);
   setInterval(getData, 1000);
   setInterval(checkBangle, 30000); // check every 30s if we have a Bangle
+  checkBangle();
 }
 function stop() {
   state.running=false;
   clearInterval();
   Q2.setPower(0);
   setFan(0);
+  if (bangle && bangle.gatt.connected)
+    bangleUart.disconnect(); // force disconnect
 }
 Jolt.setDriverMode(0,false); // driver 0 off - INPUT ONLY (throttle)
 pinMode(H0,"input"); // force output disable
@@ -339,3 +342,4 @@ start();
 }
 // ..........
 start();
+
